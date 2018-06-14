@@ -79,10 +79,13 @@ public class Main extends Application
 		PDFTextSearcher pdfTextSearcher = new PDFTextSearcher();
 		pdfTextSearcher.setStartPage(0);
 		pdfTextSearcher.setEndPage(1);
+		pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
+		//pdfTextSearcher.getText(pdDocument);
 		ArrayList<List<TextPosition>> textPositions = pdfTextSearcher.getTextPositions();
 
+		System.out.print("Pattern: ");
 		String target = scan.nextLine();
-		ArrayList<Integer> indices = getIndex(textPositions, target);
+		ArrayList<Index> indices = getIndex(textPositions, target);
 
 		BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 72, ImageType.RGB);
 		WritableImage wim = SwingFXUtils.toFXImage(bim, null);
@@ -90,7 +93,12 @@ public class Main extends Application
 		pageImage.setPreserveRatio(true);
 
 		Pane pane = new Pane();
-		pane.getChildren().addAll(pageImage);
+		pane.getChildren().add(pageImage);
+
+		for (Index index : indices)
+		{
+
+		}
 
 		VBox vBox = new VBox();
 		vBox.setPadding(new Insets(10));
@@ -102,29 +110,32 @@ public class Main extends Application
 		primaryStage.show();
 	}
 
-	public static ArrayList<Integer> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
+	private static ArrayList<Index> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
 	{
-		ArrayList<Integer> result = new ArrayList<Integer>();
-		getIndexRec(textPositions, target, result);
-		return result;
-	}
+		ArrayList<Index> result = new ArrayList<Index>();
 
-	private static void getIndexRec(ArrayList<List<TextPosition>> textPositions, String target, ArrayList<Integer> result)
-	{
 		for (int h = 0; h < textPositions.size(); h++)
 		{
 			List<TextPosition> text = textPositions.get(h);
 			for (int i = 0; i < text.size(); i++)
 			{
-				if (text.get(i).getUnicode().equals(target.charAt(0)))
+
+				//System.out.println("i: " + text.get(i));
+				//System.out.println("target: " + target.charAt(0));
+
+				if (text.get(i).getUnicode().charAt(0) == (target.charAt(0)))
 				{
+					//System.out.println("Match");
 					boolean match = true;
 					int j = 1;
 
 					// i + target.length() OR i + 1 + target.length()?
 					for (; i + j < text.size() && j < target.length(); j++)
 					{
-						if (!text.get(i + j).getUnicode().equals(target.charAt(j)))
+						//System.out.println("j: " + text.get(i + j));
+						//System.out.println("target: " + target.charAt(j));
+
+						if (text.get(i + j).getUnicode().charAt(0) != target.charAt(j))
 						{
 							match = false;
 							break;
@@ -133,13 +144,15 @@ public class Main extends Application
 
 					if (match)
 					{
-						result.add(i);
+						result.add(new Index(h, i));
 					}
 
 					i = i + j + 1;
 				}
 			}
 		}
+
+		return result;
 	}
 
 	public static void main(String[] args)
