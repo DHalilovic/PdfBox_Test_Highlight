@@ -97,7 +97,11 @@ public class Main extends Application
 
 		for (Index index : indices)
 		{
-
+			TextPosition startPos = textPositions.get(index.article).get(index.position);
+			TextPosition endPos = textPositions.get(index.article).get(index.position + target.length() - 1);
+			Rectangle highlight = new Rectangle(startPos.getX(), startPos.getY() - startPos.getHeight(), endPos.getEndX() - startPos.getX(), startPos.getHeight());
+			highlight.setFill(Color.rgb(255, 0, 0, 0.5));
+			pane.getChildren().add(highlight);
 		}
 
 		VBox vBox = new VBox();
