@@ -121,24 +121,24 @@ public class Main extends Application
 		PDDocument pdDocument = PDDocument.load(file);
 		PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
 		PDFTextSearcher pdfTextSearcher = new PDFTextSearcher();
-		
+
 		pdfTextSearcher.setStartPage(0);
-		pdfTextSearcher.setEndPage(1);
+		pdfTextSearcher.setEndPage(2);
 		pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
-		
+
 		pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
 		ArrayList<List<TextPosition>> textPositions = pdfTextSearcher.getTextPositions();
 		String target = scan.nextLine();
 		ArrayList<Index> indices = getIndex(textPositions, target);
-	
-		BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 72, ImageType.RGB);
+
+		BufferedImage bim = pdfRenderer.renderImageWithDPI(pdfTextSearcher.getEndPage() - 1, 72, ImageType.RGB);
 		WritableImage wim = SwingFXUtils.toFXImage(bim, null);
 		ImageView pageImage = new ImageView(wim);
 		pageImage.setPreserveRatio(true);
-		
+
 		Pane innerPane = new Pane();
 		innerPane.getChildren().add(pageImage);
-		
+
 		for (Index index : indices)
 		{
 			TextPosition startPos = textPositions.get(index.article).get(index.position);
@@ -147,9 +147,9 @@ public class Main extends Application
 			highlight.setFill(Color.rgb(255, 0, 0, 0.5));
 			innerPane.getChildren().add(highlight);
 		}
-		
+
 		ZoomableScrollPane pane = new ZoomableScrollPane(innerPane);
-		
+
 		VBox vBox = new VBox();
 		vBox.setPadding(new Insets(10));
 		vBox.setSpacing(8);
