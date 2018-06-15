@@ -17,6 +17,7 @@ import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.HBox;
@@ -155,7 +156,9 @@ public class Main extends Application
 		}
 
 		ZoomableScrollPane pane = new ZoomableScrollPane(innerPane);
-
+		pane.setMaxHeight(800);
+		pane.setMinHeight(800);
+		
 		VBox vBox = new VBox();
 		vBox.setPadding(new Insets(10));
 		vBox.setSpacing(8);
