@@ -114,6 +114,52 @@ public class Main extends Application
 		primaryStage.show();
 	}
 
+	public static void wordHighlightMultiPage(Stage primaryStage) throws IOException
+	{
+		Scanner scan = new Scanner(System.in);
+		File file = new File(path);
+		PDDocument pdDocument = PDDocument.load(file);
+		PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
+		PDFTextSearcher pdfTextSearcher = new PDFTextSearcher();
+		
+		pdfTextSearcher.setStartPage(0);
+		pdfTextSearcher.setEndPage(1);
+		pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
+		
+		pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
+		ArrayList<List<TextPosition>> textPositions = pdfTextSearcher.getTextPositions();
+		String target = scan.nextLine();
+		ArrayList<Index> indices = getIndex(textPositions, target);
+	
+		BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 72, ImageType.RGB);
+		WritableImage wim = SwingFXUtils.toFXImage(bim, null);
+		ImageView pageImage = new ImageView(wim);
+		pageImage.setPreserveRatio(true);
+		
+		Pane innerPane = new Pane();
+		innerPane.getChildren().add(pageImage);
+		
+		for (Index index : indices)
+		{
+			TextPosition startPos = textPositions.get(index.article).get(index.position);
+			TextPosition endPos = textPositions.get(index.article).get(index.position + target.length() - 1);
+			Rectangle highlight = new Rectangle(startPos.getX(), startPos.getY() - startPos.getHeight(), endPos.getEndX() - startPos.getX(), startPos.getHeight());
+			highlight.setFill(Color.rgb(255, 0, 0, 0.5));
+			innerPane.getChildren().add(highlight);
+		}
+		
+		ZoomableScrollPane pane = new ZoomableScrollPane(innerPane);
+		
+		VBox vBox = new VBox();
+		vBox.setPadding(new Insets(10));
+		vBox.setSpacing(8);
+		vBox.getChildren().add(pane);
+
+		primaryStage.setTitle("Test");
+		primaryStage.setScene(new Scene(vBox));
+		primaryStage.show();
+	}
+
 	private static ArrayList<Index> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
 	{
 		ArrayList<Index> result = new ArrayList<Index>();
@@ -123,7 +169,6 @@ public class Main extends Application
 			List<TextPosition> text = textPositions.get(h);
 			for (int i = 0; i < text.size(); i++)
 			{
-
 				//System.out.println("i: " + text.get(i));
 				//System.out.println("target: " + target.charAt(0));
 
@@ -168,7 +213,8 @@ public class Main extends Application
 	public void start(Stage primaryStage) throws Exception
 	{
 		//basicHighlight(primaryStage);
-		wordHighlight(primaryStage);
+		//wordHighlight(primaryStage);
+		wordHighlightMultiPage(primaryStage);
 	}
 
 }
