@@ -3,6 +3,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -31,10 +32,12 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 
 public class Main extends Application
 {
-	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\apache.pdf";
+	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\JavaStructures.pdf";
+	static double nextPos;
 
 	public static void basicHighlight(Stage primaryStage) throws IOException
 	{
@@ -130,34 +133,44 @@ public class Main extends Application
 		pdfTextSearcher.setStartPage(0);
 		Pane innerPane = new Pane();
 
-		double nextPos = 0;
+		nextPos = 0;
+		int numPages = pdDocument.getNumberOfPages();
+
 		String target = scan.nextLine();
 
-		for (int i = 0; i < 4; i++)
+		AbstractMap.SimpleEntry<Integer, Integer> pageBounds = new AbstractMap.SimpleEntry<Integer, Integer>(0, 0);
+
 		{
-			pdfTextSearcher.setEndPage(i + 1);
-			pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
-			pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
-			ArrayList<List<TextPosition>> textPositions = pdfTextSearcher.getTextPositions();
-			ArrayList<Index> indices = getIndex(textPositions, target);
+			int lastPage;
 
-			BufferedImage bim = pdfRenderer.renderImageWithDPI(i, 72, ImageType.RGB);
-			WritableImage wim = SwingFXUtils.toFXImage(bim, null);
-			ImageView pageImage = new ImageView(wim);
-			pageImage.setPreserveRatio(true);
-			pageImage.relocate(nextPos, 0);
-			innerPane.getChildren().add(pageImage);
-
-			for (Index index : indices)
+			for (lastPage = 0; lastPage < 10 && lastPage < numPages; lastPage++)
 			{
-				TextPosition startPos = textPositions.get(index.article).get(index.position);
-				TextPosition endPos = textPositions.get(index.article).get(index.position + target.length() - 1);
-				Rectangle highlight = new Rectangle(startPos.getX() + nextPos, startPos.getY() - startPos.getHeight(), endPos.getEndX() - startPos.getX(), startPos.getHeight());
-				highlight.setFill(Color.rgb(255, 0, 0, 0.5));
-				innerPane.getChildren().add(highlight);
+				pdfTextSearcher.setEndPage(lastPage + 1);
+				pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
+				pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
+				ArrayList<List<TextPosition>> textPositions = pdfTextSearcher.getTextPositions();
+				ArrayList<Index> indices = getIndex(textPositions, target);
+
+				BufferedImage bim = pdfRenderer.renderImageWithDPI(lastPage, 72, ImageType.RGB);
+				WritableImage wim = SwingFXUtils.toFXImage(bim, null);
+				ImageView pageImage = new ImageView(wim);
+				pageImage.setPreserveRatio(true);
+				pageImage.relocate(nextPos, 0);
+				innerPane.getChildren().add(pageImage);
+
+				for (Index index : indices)
+				{
+					TextPosition startPos = textPositions.get(index.article).get(index.position);
+					TextPosition endPos = textPositions.get(index.article).get(index.position + target.length() - 1);
+					Rectangle highlight = new Rectangle(startPos.getX() + nextPos, startPos.getY() - startPos.getHeight(), endPos.getEndX() - startPos.getX(), startPos.getHeight());
+					highlight.setFill(Color.rgb(255, 0, 0, 0.5));
+					innerPane.getChildren().add(highlight);
+				}
+
+				nextPos = pageImage.getBoundsInParent().getMaxX() + 16;
 			}
 
-			nextPos = pageImage.getBoundsInParent().getMaxX() + 16;
+			pageBounds.setValue(lastPage);
 		}
 
 		ZoomableScrollPane pane = new ZoomableScrollPane(innerPane);
@@ -175,14 +188,31 @@ public class Main extends Application
 
 		pane.setHmax(1000);
 		pane.setHmin(0);
-		
+
 		pane.hvalueProperty().addListener(new ChangeListener<Number>()
 		{
 			public void changed(ObservableValue<? extends Number> ov, Number oldVal, Number newVal)
 			{
 				if (newVal.intValue() >= pane.getHmax())
 				{
+					//pane.getChildrenUnmodifiable().clear();
+
 					System.out.println("Max: " + newVal.intValue());
+
+					try
+					{
+						BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 72, ImageType.RGB);
+						WritableImage wim = SwingFXUtils.toFXImage(bim, null);
+						ImageView pageImage = new ImageView(wim);
+						pageImage.setPreserveRatio(true);
+						pageImage.relocate(nextPos, 0);
+						innerPane.getChildren().add(pageImage);
+
+						nextPos = pageImage.getBoundsInParent().getMaxX() + 16;
+					} catch (IOException e)
+					{
+
+					}
 				}
 				if (newVal.intValue() <= pane.getHmin())
 				{
