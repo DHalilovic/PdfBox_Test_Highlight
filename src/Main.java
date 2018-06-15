@@ -6,6 +6,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
@@ -14,9 +15,13 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -158,7 +163,7 @@ public class Main extends Application
 		ZoomableScrollPane pane = new ZoomableScrollPane(innerPane);
 		pane.setMaxHeight(800);
 		pane.setMinHeight(800);
-		
+
 		VBox vBox = new VBox();
 		vBox.setPadding(new Insets(10));
 		vBox.setSpacing(8);
@@ -167,6 +172,24 @@ public class Main extends Application
 		primaryStage.setTitle("Test");
 		primaryStage.setScene(new Scene(vBox));
 		primaryStage.show();
+
+		pane.setHmax(1000);
+		pane.setHmin(0);
+		
+		pane.hvalueProperty().addListener(new ChangeListener<Number>()
+		{
+			public void changed(ObservableValue<? extends Number> ov, Number oldVal, Number newVal)
+			{
+				if (newVal.intValue() >= pane.getHmax())
+				{
+					System.out.println("Max: " + newVal.intValue());
+				}
+				if (newVal.intValue() <= pane.getHmin())
+				{
+					System.out.println("Min: " + newVal.intValue());
+				}
+			}
+		});
 	}
 
 	private static ArrayList<Index> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
