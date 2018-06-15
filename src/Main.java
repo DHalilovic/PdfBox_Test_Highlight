@@ -121,31 +121,37 @@ public class Main extends Application
 		PDDocument pdDocument = PDDocument.load(file);
 		PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
 		PDFTextSearcher pdfTextSearcher = new PDFTextSearcher();
-
 		pdfTextSearcher.setStartPage(0);
-		pdfTextSearcher.setEndPage(2);
-		pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
-
-		pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
-		ArrayList<List<TextPosition>> textPositions = pdfTextSearcher.getTextPositions();
-		String target = scan.nextLine();
-		ArrayList<Index> indices = getIndex(textPositions, target);
-
-		BufferedImage bim = pdfRenderer.renderImageWithDPI(pdfTextSearcher.getEndPage() - 1, 72, ImageType.RGB);
-		WritableImage wim = SwingFXUtils.toFXImage(bim, null);
-		ImageView pageImage = new ImageView(wim);
-		pageImage.setPreserveRatio(true);
-
 		Pane innerPane = new Pane();
-		innerPane.getChildren().add(pageImage);
 
-		for (Index index : indices)
+		double nextPos = 0;
+		String target = scan.nextLine();
+
+		for (int i = 0; i < 4; i++)
 		{
-			TextPosition startPos = textPositions.get(index.article).get(index.position);
-			TextPosition endPos = textPositions.get(index.article).get(index.position + target.length() - 1);
-			Rectangle highlight = new Rectangle(startPos.getX(), startPos.getY() - startPos.getHeight(), endPos.getEndX() - startPos.getX(), startPos.getHeight());
-			highlight.setFill(Color.rgb(255, 0, 0, 0.5));
-			innerPane.getChildren().add(highlight);
+			pdfTextSearcher.setEndPage(i + 1);
+			pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
+			pdfTextSearcher.writeText(pdDocument, new OutputStreamWriter(new ByteArrayOutputStream()));
+			ArrayList<List<TextPosition>> textPositions = pdfTextSearcher.getTextPositions();
+			ArrayList<Index> indices = getIndex(textPositions, target);
+
+			BufferedImage bim = pdfRenderer.renderImageWithDPI(i, 72, ImageType.RGB);
+			WritableImage wim = SwingFXUtils.toFXImage(bim, null);
+			ImageView pageImage = new ImageView(wim);
+			pageImage.setPreserveRatio(true);
+			pageImage.relocate(nextPos, 0);
+			innerPane.getChildren().add(pageImage);
+
+			for (Index index : indices)
+			{
+				TextPosition startPos = textPositions.get(index.article).get(index.position);
+				TextPosition endPos = textPositions.get(index.article).get(index.position + target.length() - 1);
+				Rectangle highlight = new Rectangle(startPos.getX() + nextPos, startPos.getY() - startPos.getHeight(), endPos.getEndX() - startPos.getX(), startPos.getHeight());
+				highlight.setFill(Color.rgb(255, 0, 0, 0.5));
+				innerPane.getChildren().add(highlight);
+			}
+
+			nextPos = pageImage.getBoundsInParent().getMaxX() + 16;
 		}
 
 		ZoomableScrollPane pane = new ZoomableScrollPane(innerPane);
