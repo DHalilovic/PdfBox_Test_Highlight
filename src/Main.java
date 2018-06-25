@@ -15,14 +15,18 @@ import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 
+import com.sun.javafx.scene.control.skin.ScrollPaneSkin;
+
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -157,6 +161,7 @@ public class Main extends Application
 				pageImage.setPreserveRatio(true);
 				pageImage.relocate(nextPos, 0);
 				innerPane.getChildren().add(pageImage);
+				//pageImage.setFocusTraversable(false);
 
 				for (Index index : indices)
 				{
@@ -165,6 +170,7 @@ public class Main extends Application
 					Rectangle highlight = new Rectangle(startPos.getX() + nextPos, startPos.getY() - startPos.getHeight(), endPos.getEndX() - startPos.getX(), startPos.getHeight());
 					highlight.setFill(Color.rgb(255, 0, 0, 0.5));
 					innerPane.getChildren().add(highlight);
+					//highlight.setFocusTraversable(false);
 				}
 
 				nextPos = pageImage.getBoundsInParent().getMaxX() + 16;
@@ -173,9 +179,11 @@ public class Main extends Application
 			pageBounds.setValue(lastPage);
 		}
 
+		//innerPane.setFocusTraversable(false);
 		ZoomableScrollPane pane = new ZoomableScrollPane(innerPane);
 		pane.setMaxHeight(800);
 		pane.setMinHeight(800);
+		//pane.setFocusTraversable(false);
 
 		VBox vBox = new VBox();
 		vBox.setPadding(new Insets(10));
@@ -195,19 +203,24 @@ public class Main extends Application
 			{
 				if (newVal.intValue() >= pane.getHmax())
 				{
-					//pane.getChildrenUnmodifiable().clear();
+					innerPane.getChildren().clear();
 
 					System.out.println("Max: " + newVal.intValue());
 
 					try
 					{
+						//Double scrollPos = pane.getHvalue();
+
 						BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 72, ImageType.RGB);
 						WritableImage wim = SwingFXUtils.toFXImage(bim, null);
 						ImageView pageImage = new ImageView(wim);
 						pageImage.setPreserveRatio(true);
 						pageImage.relocate(nextPos, 0);
 						innerPane.getChildren().add(pageImage);
+						pageImage.requestFocus();
+						//innerPane.requestFocus();
 
+						//pane.setHvalue(scrollPos);
 						nextPos = pageImage.getBoundsInParent().getMaxX() + 16;
 					} catch (IOException e)
 					{
@@ -220,6 +233,7 @@ public class Main extends Application
 				}
 			}
 		});
+
 	}
 
 	private static ArrayList<Index> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
@@ -266,6 +280,75 @@ public class Main extends Application
 		return result;
 	}
 
+	private static void scrollNoTraverse(Stage primaryStage) throws IOException
+	{
+		Pane ip = new Pane();
+		ZoomableScrollPane sp = new ZoomableScrollPane(ip);
+		sp.setHbarPolicy(ScrollBarPolicy.ALWAYS);
+		PDDocument pdDocument = PDDocument.load(new File(path));
+		PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
+		PDFTextSearcher pdfTextSearcher = new PDFTextSearcher();
+		pdfTextSearcher.setStartPage(0);
+
+		int lastPage;
+
+		for (lastPage = 0; lastPage < 10; lastPage++)
+		{
+			BufferedImage bim = pdfRenderer.renderImageWithDPI(lastPage, 72, ImageType.RGB);
+			WritableImage wim = SwingFXUtils.toFXImage(bim, null);
+			ImageView pageImage = new ImageView(wim);
+			pageImage.setPreserveRatio(true);
+			pageImage.relocate(nextPos, 0);
+			ip.getChildren().add(pageImage);
+			nextPos = pageImage.getBoundsInParent().getMaxX() + 16;
+		}
+
+		primaryStage.setTitle("Test");
+		primaryStage.setScene(new Scene(sp));
+		primaryStage.show();
+
+		sp.hvalueProperty().addListener(new ChangeListener<Number>()
+		{
+			public void changed(ObservableValue<? extends Number> ov, Number oldVal, Number newVal)
+			{
+				if (newVal.intValue() >= sp.getHmax())
+				{
+					//ip.getChildren().clear();
+
+					//System.out.println("Max: " + newVal.intValue());
+
+					try
+					{
+						//Double scrollPos = pane.getHvalue();
+
+						BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 72, ImageType.RGB);
+						WritableImage wim = SwingFXUtils.toFXImage(bim, null);
+
+						for (int i = 0; i < 10; i++)
+						{
+							ImageView pageImage = new ImageView(wim);
+							pageImage.setPreserveRatio(true);
+							pageImage.relocate(nextPos, 0);
+							ip.getChildren().add(pageImage);
+							pageImage.requestFocus();
+							//innerPane.requestFocus();
+							//pane.setHvalue(scrollPos);
+							nextPos = pageImage.getBoundsInParent().getMaxX() + 16;
+						}
+					} catch (IOException e)
+					{
+
+					}
+				}
+				if (newVal.intValue() <= sp.getHmin())
+				{
+					//System.out.println("Min: " + newVal.intValue());
+				}
+			}
+		});
+
+	}
+
 	public static void main(String[] args)
 	{
 		launch();
@@ -276,7 +359,8 @@ public class Main extends Application
 	{
 		//basicHighlight(primaryStage);
 		//wordHighlight(primaryStage);
-		wordHighlightMultiPage(primaryStage);
+		//wordHighlightMultiPage(primaryStage);
+		scrollNoTraverse(primaryStage);
 	}
 
 }
