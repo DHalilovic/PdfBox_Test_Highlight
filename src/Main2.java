@@ -21,6 +21,7 @@ import com.sun.javafx.scene.control.skin.ScrollPaneSkin;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
@@ -43,6 +44,7 @@ import javafx.util.Pair;
 public class Main2 extends Application
 {
 	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\JavaStructures.pdf";
+	final static int pagePadding = 16;
 
 	private static ArrayList<Index> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
 	{
@@ -88,26 +90,31 @@ public class Main2 extends Application
 	private void renderPages(int center, int radius, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher)
 	{
 		renderPage(center, pdfRenderer, pdfTextSearcher); // Render center page
-		
+
 		// Render remaining pages outwards
 		for (int i = 1; i < radius; i++)
 		{
-			if (true) {
-				
+			if (true)
+			{
+
 			}
 		}
 	}
-	
-	private void createPlaceholders(int numberPages, PDFRenderer pdfRenderer, Pane pageLayer) throws IOException
+
+	private static void createPlaceholders(int numberPages, PDFRenderer pdfRenderer, Pane pageLayer) throws IOException
 	{
 		double nextPagePos = 0;
 		double pageWidth = pdfRenderer.renderImage(0).getWidth();
 		double pageHeight = pdfRenderer.renderImage(0).getWidth();
-		
+		ObservableList<Node> children = pageLayer.getChildren();
+
 		// Render remaining pages outwards
-		for (int i = 1; i < numberPages; i++)
+		for (int i = 0; i < numberPages; i++)
 		{
-			Rectangle placeHolder = new Rectangle();
+			Rectangle placeHolder = new Rectangle(nextPagePos, 0, pageWidth, pageHeight);
+			placeHolder.setFill(Color.WHITE);
+			nextPagePos += pageWidth + pagePadding;
+			children.add(i, placeHolder);
 		}
 	}
 
@@ -117,7 +124,7 @@ public class Main2 extends Application
 		PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
 		PDFTextSearcher pdfTextSearcher = new PDFTextSearcher();
 		int numberPages = pdDocument.getNumberOfPages();
-		
+
 		StackPane pdfViewPane = new StackPane();
 		Pane pageLayer = new Pane();
 		Pane highlightLayer = new Pane();
@@ -125,6 +132,8 @@ public class Main2 extends Application
 		ZoomableScrollPane pdfScrollPane = new ZoomableScrollPane(pdfViewPane);
 		pdfScrollPane.setHbarPolicy(ScrollBarPolicy.ALWAYS);
 
+		createPlaceholders(numberPages, pdfRenderer, pageLayer);
+		
 		primaryStage.setTitle("Test");
 		primaryStage.setScene(new Scene(pdfScrollPane));
 		primaryStage.show();
