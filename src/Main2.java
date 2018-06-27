@@ -25,6 +25,7 @@ import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollBar;
@@ -45,6 +46,7 @@ public class Main2 extends Application
 {
 	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\JavaStructures.pdf";
 	final static int pagePadding = 16;
+	int lastRenderStartPage = 0;
 
 	private static ArrayList<Index> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
 	{
@@ -82,30 +84,44 @@ public class Main2 extends Application
 		return result;
 	}
 
-	private void renderPage(int page, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher)
+	private void renderPage(int page, double xPosition, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher, Pane pageLayer) throws IOException
 	{
-
+		BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 72, ImageType.RGB);
+		WritableImage wim = SwingFXUtils.toFXImage(bim, null);
+		ImageView pageImage = new ImageView(wim);
+		pageImage.setPreserveRatio(true);
+		pageImage.relocate(xPosition, 0);
 	}
 
-	private void renderPages(int center, int radius, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher)
+	private void renderPages(int center, int radius, int numberPages, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher, Pane pageLayer) throws IOException
 	{
-		renderPage(center, pdfRenderer, pdfTextSearcher); // Render center page
+		ObservableList<Node> xPositions = pageLayer.getChildren();
+		renderPage(center, xPositions.get(center).getLayoutX(), pdfRenderer, pdfTextSearcher, pageLayer); // Render center page
+		int currentPage;
 
 		// Render remaining pages outwards
 		for (int i = 1; i < radius; i++)
 		{
-			if (true)
-			{
+			currentPage = center + i;
+			if (currentPage > numberPages)
+				renderPage(currentPage, xPositions.get(currentPage).getLayoutX(), pdfRenderer, pdfTextSearcher, pageLayer);
+			else
+				break;
 
-			}
+		}
+		for (int i = -1; i > 0 - radius; i--)
+		{
+			currentPage = center + i;
+			if (currentPage < 0)
+				renderPage(currentPage, xPositions.get(currentPage).getLayoutX(), pdfRenderer, pdfTextSearcher, pageLayer);
+			else
+				break;
 		}
 	}
 
-	private static void createPlaceholders(int numberPages, PDFRenderer pdfRenderer, Pane pageLayer) throws IOException
+	private static void createPlaceholders(int numberPages, double pageWidth, double pageHeight, Pane pageLayer) throws IOException
 	{
 		double nextPagePos = 0;
-		double pageWidth = pdfRenderer.renderImage(0).getWidth();
-		double pageHeight = pdfRenderer.renderImage(0).getWidth();
 		ObservableList<Node> children = pageLayer.getChildren();
 
 		// Render remaining pages outwards
@@ -125,15 +141,57 @@ public class Main2 extends Application
 		PDFTextSearcher pdfTextSearcher = new PDFTextSearcher();
 		int numberPages = pdDocument.getNumberOfPages();
 
+		
+		int pageWidth;
+		int pageHeight;
+		{
+			BufferedImage tempImage = pdfRenderer.renderImage(0);
+			pageWidth = tempImage.getWidth();
+			pageHeight = tempImage.getHeight();
+		}
+
 		StackPane pdfViewPane = new StackPane();
 		Pane pageLayer = new Pane();
 		Pane highlightLayer = new Pane();
 		pdfViewPane.getChildren().addAll(pageLayer, highlightLayer);
 		ZoomableScrollPane pdfScrollPane = new ZoomableScrollPane(pdfViewPane);
 		pdfScrollPane.setHbarPolicy(ScrollBarPolicy.ALWAYS);
+		pdfScrollPane.setHmax(numberPages);
+		pdfScrollPane.hvalueProperty().addListener(new ChangeListener<Number>()
+		{
+			public void changed(ObservableValue<? extends Number> ov, Number oldVal, Number newVal)
+			{
+				int newValInt = newVal.intValue();
+				
+				if (Math.abs(newValInt - lastRenderStartPage) > 4) {
+					//System.out.println((newValInt));
+					lastRenderStartPage = newValInt;
+					try
+					{
+						renderPages(lastRenderStartPage, 5, numberPages, pdfRenderer, pdfTextSearcher, pageLayer);
+					} catch (IOException e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}
+		});
+		/*
+		pdfScrollPane.getContent().setOnScroll(e ->
+		{
+			if (e.isControlDown())
+			{
+				e.consume();
+				pdfScrollPane.onScroll(e.getTextDeltaY(), new Point2D(e.getX(), e.getY()));
+			} else
+			{
+				System.out.println(pdfScrollPane.getHvalue());
+			}
+		});
+		*/
 
-		createPlaceholders(numberPages, pdfRenderer, pageLayer);
-		
+		createPlaceholders(numberPages, pageWidth, pageHeight, pageLayer);
+
 		primaryStage.setTitle("Test");
 		primaryStage.setScene(new Scene(pdfScrollPane));
 		primaryStage.show();
