@@ -10,6 +10,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -38,7 +39,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
-public class Main extends Application
+public class Main //extends Application
 {
 	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\JavaStructures.pdf";
 	static double nextPos;
@@ -346,21 +347,34 @@ public class Main extends Application
 				}
 			}
 		});
-
 	}
 
+	private static void scrollPageCount(Stage primaryStage) throws InvalidPasswordException, IOException
+	{
+		Pane ip = new Pane();
+		ZoomableScrollPane sp = new ZoomableScrollPane(ip);
+		sp.setHbarPolicy(ScrollBarPolicy.ALWAYS);
+		PDDocument pdDocument = PDDocument.load(new File(path));
+		PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
+		PDFTextSearcher pdfTextSearcher = new PDFTextSearcher();
+	}
+
+	/*
 	public static void main(String[] args)
 	{
 		launch();
 	}
+	*/
 
+	/*
 	@Override
 	public void start(Stage primaryStage) throws Exception
 	{
 		//basicHighlight(primaryStage);
 		//wordHighlight(primaryStage);
 		//wordHighlightMultiPage(primaryStage);
-		scrollNoTraverse(primaryStage);
+		//scrollNoTraverse(primaryStage);
+		scrollPageCount(primaryStage);
 	}
-
+	*/
 }
