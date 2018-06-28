@@ -19,9 +19,11 @@ import org.apache.pdfbox.text.TextPosition;
 import com.sun.javafx.scene.control.skin.ScrollPaneSkin;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
@@ -94,18 +96,19 @@ public class Main2 extends Application
 		pageLayer.getChildren().add(pageImage);
 	}
 
+	/*
 	private void renderPages(int center, int radius, int numberPages, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher, Pane pageLayer, Pane placeholderLayer) throws IOException
 	{
-		System.out.println(center);
+		//System.out.println(center);
 		if (center < 0 || center >= numberPages)
 			return;
-
+	
 		pageLayer.getChildren().clear();
-
+	
 		ObservableList<Node> xPositions = placeholderLayer.getChildren();
 		renderPage(center, ((Rectangle) xPositions.get(center)).xProperty().doubleValue(), pdfRenderer, pdfTextSearcher, pageLayer);
 		int currentPage;
-
+	
 		// Render remaining pages outwards
 		for (int i = 1; i < radius; i++)
 		{
@@ -116,7 +119,7 @@ public class Main2 extends Application
 				renderPage(currentPage, ((Rectangle) xPositions.get(currentPage)).xProperty().doubleValue(), pdfRenderer, pdfTextSearcher, pageLayer);
 			} else
 				break;
-
+	
 		}
 		for (int i = -1; i > 0 - radius; i--)
 		{
@@ -127,6 +130,27 @@ public class Main2 extends Application
 				renderPage(currentPage, ((Rectangle) xPositions.get(currentPage)).xProperty().doubleValue(), pdfRenderer, pdfTextSearcher, pageLayer);
 			} else
 				break;
+		}
+	}
+	*/
+
+	synchronized private void renderPages(int center, int radius, int numberPages, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher, Pane pageLayer, Pane placeholderLayer) throws IOException
+	{
+		if (center < 0 || center >= numberPages)
+			return;
+
+		pageLayer.getChildren().clear();
+		ObservableList<Node> xPositions = placeholderLayer.getChildren();
+		int currentPage;
+
+		// Render remaining pages outwards
+		for (int i = -radius; i <= radius; i++)
+		{
+			currentPage = center + i;
+			if (currentPage < 0 || currentPage >= numberPages)
+				continue;
+
+			renderPage(currentPage, ((Rectangle) xPositions.get(currentPage)).xProperty().doubleValue(), pdfRenderer, pdfTextSearcher, pageLayer);
 		}
 	}
 
@@ -176,15 +200,34 @@ public class Main2 extends Application
 
 				if (Math.abs(newValInt - lastRenderStartPage) > 4)
 				{
-					//System.out.println((newValInt));
 					lastRenderStartPage = newValInt;
-					try
+
+					//TODO Only one thread can access a single PDFBox instance at a time; distribute instances across threads?
+					Task<Void> renderTask = new Task<Void>()
 					{
-						renderPages(lastRenderStartPage, 5, numberPages, pdfRenderer, pdfTextSearcher, pageLayer, placeholderLayer);
-					} catch (IOException e)
-					{
-						//e.printStackTrace();
-					}
+						@Override
+						protected Void call()
+						{
+							Platform.runLater(() -> 
+							{
+								try
+								{
+									renderPages(lastRenderStartPage, 10, numberPages, pdfRenderer, pdfTextSearcher, pageLayer, placeholderLayer);
+								} catch (IOException e)
+								{
+									e.printStackTrace();
+								}
+							});
+
+							return null;
+						}
+					};
+
+					Thread renderHandler = new Thread(renderTask);
+					renderHandler.setDaemon(true);
+					renderHandler.start();
+
+					//System.out.println(newValInt);
 				}
 			}
 		});
