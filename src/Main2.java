@@ -28,6 +28,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollBar;
@@ -48,7 +49,7 @@ public class Main2 extends Application
 {
 	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\JavaStructures.pdf";
 	final static int pagePadding = 16;
-	int lastRenderStartPage = 0;
+	double lastRenderStartPage = 0;
 
 	private static ArrayList<Index> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
 	{
@@ -187,18 +188,22 @@ public class Main2 extends Application
 		StackPane pdfViewPane = new StackPane();
 		Pane placeholderLayer = new Pane();
 		Pane pageLayer = new Pane();
-		Pane highlightLayer = new Pane();
+		Pane highlightLayer = new Pane();		
+		
 		pdfViewPane.getChildren().addAll(placeholderLayer, pageLayer, highlightLayer);
-		ZoomableScrollPane pdfScrollPane = new ZoomableScrollPane(pdfViewPane);
+		NewZoomableScrollPane pdfScrollPane = new NewZoomableScrollPane(pdfViewPane);
 		pdfScrollPane.setHbarPolicy(ScrollBarPolicy.ALWAYS);
-		pdfScrollPane.setHmax(numberPages);
+		
+		// Breaks mouse-based zooming, due to changing Hscale from [0, 1] to [0, numberPages]
+		//pdfScrollPane.setHmax(numberPages);
+		
 		pdfScrollPane.hvalueProperty().addListener(new ChangeListener<Number>()
 		{
 			public void changed(ObservableValue<? extends Number> ov, Number oldVal, Number newVal)
 			{
-				int newValInt = newVal.intValue();
+				double newValInt = newVal.doubleValue();
 
-				if (Math.abs(newValInt - lastRenderStartPage) > 4)
+				if (Math.abs((newValInt - lastRenderStartPage) * numberPages) > 4)
 				{
 					lastRenderStartPage = newValInt;
 
@@ -212,7 +217,7 @@ public class Main2 extends Application
 							{
 								try
 								{
-									renderPages(lastRenderStartPage, 10, numberPages, pdfRenderer, pdfTextSearcher, pageLayer, placeholderLayer);
+									renderPages((int) (lastRenderStartPage * numberPages), 10, numberPages, pdfRenderer, pdfTextSearcher, pageLayer, placeholderLayer);
 								} catch (IOException e)
 								{
 									e.printStackTrace();
@@ -247,6 +252,8 @@ public class Main2 extends Application
 
 		createPlaceholders(numberPages, pageWidth, pageHeight, placeholderLayer);
 
+		
+		
 		primaryStage.setTitle("Test");
 		primaryStage.setScene(new Scene(pdfScrollPane));
 		primaryStage.show();

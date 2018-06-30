@@ -39,7 +39,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
-public class Main //extends Application
+public class Main extends Application
 {
 	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\JavaStructures.pdf";
 	static double nextPos;
@@ -359,14 +359,14 @@ public class Main //extends Application
 		PDFTextSearcher pdfTextSearcher = new PDFTextSearcher();
 	}
 
-	/*
+
 	public static void main(String[] args)
 	{
 		launch();
 	}
-	*/
 
-	/*
+
+
 	@Override
 	public void start(Stage primaryStage) throws Exception
 	{
@@ -374,7 +374,7 @@ public class Main //extends Application
 		//wordHighlight(primaryStage);
 		//wordHighlightMultiPage(primaryStage);
 		//scrollNoTraverse(primaryStage);
-		scrollPageCount(primaryStage);
+		//scrollPageCount(primaryStage);
 	}
-	*/
+
 }

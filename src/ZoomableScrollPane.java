@@ -19,18 +19,19 @@ public class ZoomableScrollPane extends ScrollPane
 	public ZoomableScrollPane(Node target)
 	{
 		super();
-		
+
 		this.target = target;
 		this.zoomNode = new Group(target);
 		setContent(outerNode(zoomNode));
 
 		setPannable(true);
 		setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-		setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+		setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
 		setFitToHeight(true); //center
 		setFitToWidth(true); //center
 
 		updateScale();
+
 		
 		this.setSkin(new ScrollPaneSkin(this)
 		{
@@ -54,7 +55,7 @@ public class ZoomableScrollPane extends ScrollPane
 
 			}
 		});
-		
+
 		return outerNode;
 	}
 
@@ -82,7 +83,7 @@ public class ZoomableScrollPane extends ScrollPane
 		double valX = this.getHvalue() * (innerBounds.getWidth() - viewportBounds.getWidth());
 		double valY = this.getVvalue() * (innerBounds.getHeight() - viewportBounds.getHeight());
 
-		scaleValue = scaleValue * zoomFactor;
+		scaleValue *= zoomFactor;
 		updateScale();
 		this.layout(); // refresh ScrollPane scroll positions & target bounds
 
