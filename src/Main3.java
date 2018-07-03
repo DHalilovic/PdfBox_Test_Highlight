@@ -45,7 +45,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
-public class Main2 //extends Application
+public class Main3 extends Application
 {
 	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\JavaStructures.pdf";
 	final static int pagePadding = 16;
@@ -87,73 +87,7 @@ public class Main2 //extends Application
 		return result;
 	}
 
-	private void renderPage(int page, double xPosition, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher, Pane pageLayer) throws IOException
-	{
-		BufferedImage bim = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
-		WritableImage wim = SwingFXUtils.toFXImage(bim, null);
-		ImageView pageImage = new ImageView(wim);
-		pageImage.setPreserveRatio(true);
-		pageImage.relocate(xPosition, 0);
-		pageLayer.getChildren().add(pageImage);
-	}
 
-	/*
-	private void renderPages(int center, int radius, int numberPages, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher, Pane pageLayer, Pane placeholderLayer) throws IOException
-	{
-		//System.out.println(center);
-		if (center < 0 || center >= numberPages)
-			return;
-	
-		pageLayer.getChildren().clear();
-	
-		ObservableList<Node> xPositions = placeholderLayer.getChildren();
-		renderPage(center, ((Rectangle) xPositions.get(center)).xProperty().doubleValue(), pdfRenderer, pdfTextSearcher, pageLayer);
-		int currentPage;
-	
-		// Render remaining pages outwards
-		for (int i = 1; i < radius; i++)
-		{
-			currentPage = center + i;
-			if (currentPage < numberPages)
-			{
-				//System.out.println(((Rectangle) xPositions.get(currentPage)).xProperty().doubleValue());
-				renderPage(currentPage, ((Rectangle) xPositions.get(currentPage)).xProperty().doubleValue(), pdfRenderer, pdfTextSearcher, pageLayer);
-			} else
-				break;
-	
-		}
-		for (int i = -1; i > 0 - radius; i--)
-		{
-			currentPage = center + i;
-			if (currentPage >= 0)
-			{
-				//System.out.println(((Rectangle) xPositions.get(currentPage)).xProperty().doubleValue());
-				renderPage(currentPage, ((Rectangle) xPositions.get(currentPage)).xProperty().doubleValue(), pdfRenderer, pdfTextSearcher, pageLayer);
-			} else
-				break;
-		}
-	}
-	*/
-
-	synchronized private void renderPages(int center, int radius, int numberPages, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher, Pane pageLayer, Pane placeholderLayer) throws IOException
-	{
-		if (center < 0 || center >= numberPages)
-			return;
-
-		pageLayer.getChildren().clear();
-		ObservableList<Node> xPositions = placeholderLayer.getChildren();
-		int currentPage;
-
-		// Render remaining pages outwards
-		for (int i = -radius; i <= radius; i++)
-		{
-			currentPage = center + i;
-			if (currentPage < 0 || currentPage >= numberPages)
-				continue;
-
-			renderPage(currentPage, ((Rectangle) xPositions.get(currentPage)).xProperty().doubleValue(), pdfRenderer, pdfTextSearcher, pageLayer);
-		}
-	}
 
 	private static void createPlaceholders(int numberPages, double pageWidth, double pageHeight, Pane placeholderLayer) throws IOException
 	{
@@ -173,13 +107,12 @@ public class Main2 //extends Application
 	public void start(Stage primaryStage) throws Exception
 	{
 		PDDocument pdDocument = PDDocument.load(new File(path));
-		PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
-		PDFTextSearcher pdfTextSearcher = new PDFTextSearcher();
 		int numberPages = pdDocument.getNumberOfPages();
-
 		int pageWidth;
 		int pageHeight;
+		
 		{
+			PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
 			BufferedImage tempImage = pdfRenderer.renderImage(0);
 			pageWidth = tempImage.getWidth();
 			pageHeight = tempImage.getHeight();
@@ -194,8 +127,7 @@ public class Main2 //extends Application
 		NewZoomableScrollPane pdfScrollPane = new NewZoomableScrollPane(pdfViewPane);
 		pdfScrollPane.setHbarPolicy(ScrollBarPolicy.ALWAYS);
 		
-		// Breaks mouse-based zooming, due to changing Hscale from [0, 1] to [0, numberPages]
-		//pdfScrollPane.setHmax(numberPages);
+		createPlaceholders(numberPages, pageWidth, pageHeight, placeholderLayer);
 		
 		pdfScrollPane.hvalueProperty().addListener(new ChangeListener<Number>()
 		{
@@ -206,63 +138,31 @@ public class Main2 //extends Application
 				if (Math.abs((newValInt - lastRenderStartPage) * numberPages) > 4)
 				{
 					lastRenderStartPage = newValInt;
-
+					pageLayer.getChildren().clear();
+					
 					//TODO Only one thread can access a single PDFBox instance at a time; distribute instances across threads?
-					Task<Void> renderTask = new Task<Void>()
+					PdfRenderTask<Void> renderTask;
+					try
 					{
-						@Override
-						protected Void call()
-						{
-							Platform.runLater(() -> 
-							{
-								try
-								{
-									renderPages((int) (lastRenderStartPage * numberPages), 10, numberPages, pdfRenderer, pdfTextSearcher, pageLayer, placeholderLayer);
-								} catch (IOException e)
-								{
-									e.printStackTrace();
-								}
-							});
-
-							return null;
-						}
-					};
-
-					Thread renderHandler = new Thread(renderTask);
-					renderHandler.setDaemon(true);
-					renderHandler.start();
-
-					//System.out.println(newValInt);
+						renderTask = new PdfRenderTask<Void>(pdDocument, numberPages, lastRenderStartPage, pageLayer, placeholderLayer);
+						Thread renderHandler = new Thread(renderTask);
+						renderHandler.setDaemon(true);
+						renderHandler.start();
+					} catch (IOException e)
+					{
+						e.printStackTrace();
+					}
 				}
 			}
 		});
-		/*
-		pdfScrollPane.getContent().setOnScroll(e ->
-		{
-			if (e.isControlDown())
-			{
-				e.consume();
-				pdfScrollPane.onScroll(e.getTextDeltaY(), new Point2D(e.getX(), e.getY()));
-			} else
-			{
-				System.out.println(pdfScrollPane.getHvalue());
-			}
-		});
-		*/
 
-		createPlaceholders(numberPages, pageWidth, pageHeight, placeholderLayer);
-
-		
-		
 		primaryStage.setTitle("Test");
 		primaryStage.setScene(new Scene(pdfScrollPane));
 		primaryStage.show();
 	}
 
-	/*
 	public static void main(String[] args)
 	{
 		launch();
 	}
-	*/
 }
