@@ -1,6 +1,8 @@
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
@@ -24,53 +26,41 @@ public class PdfRenderTask4<E> extends Task<E>
 	Pane placeholderLayer;
 	Pane pageLayer;
 	int numberPages;
-	int lastRenderStartPage;
-	int lastRenderLowBound;
-	int lastRenderHighBound;
+	Set<Integer> requestedPages;
 	ArrayList<ImageView> pageImages;
 
-	public PdfRenderTask4(PDDocument pdDocument, int numberPages, int lastRenderStartPage, int lastRenderLowBound, int lastRenderHighBound, Pane pageLayer, Pane placeholderLayer) throws IOException
+	public PdfRenderTask4(PDDocument pdDocument, int numberPages, Pane pageLayer, Pane placeholderLayer, Set<Integer> requestedPages) throws IOException
 	{
 		this.pdfRenderer = new PDFRenderer(pdDocument);
 		this.pdfTextSearcher = new PDFTextSearcher();
 		this.numberPages = numberPages;
-		this.lastRenderStartPage = lastRenderStartPage;
-		this.lastRenderLowBound = lastRenderLowBound;
-		this.lastRenderHighBound = lastRenderHighBound;
 		this.pageLayer = pageLayer;
 		this.placeholderLayer = placeholderLayer;
 		pageImages = new ArrayList<ImageView>();
+		this.requestedPages = requestedPages;
 	}
 
-	private void renderPage(int page, double xPosition, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher, Pane pageLayer) throws IOException
+	private void renderPage(int index, double xPosition) throws IOException
 	{
-		BufferedImage bim = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
+		BufferedImage bim = pdfRenderer.renderImageWithDPI(index, 72, ImageType.RGB);
 		WritableImage wim = SwingFXUtils.toFXImage(bim, null);
-		ImageView pageImage = new ImageView(wim);
+		PageImageView pageImage = new PageImageView(wim, index);
 		pageImage.setPreserveRatio(true);
 		pageImage.relocate(xPosition, 0);
 		pageImages.add(pageImage);
 	}
 
-	private void renderPages(int center, int radius, int lastLow, int lastHigh, int numberPages, PDFRenderer pdfRenderer, PDFTextSearcher pdfTextSearcher, Pane pageLayer, Pane placeholderLayer) throws IOException
+	private void renderPages() throws IOException
 	{
-		if (center < 0 || center >= numberPages)
-			return;
-
 		ObservableList<Node> xPositions = placeholderLayer.getChildren();
-		int currentPage;
 
-		// Render remaining pages outwards
-		for (int i = -radius; !isCancelled() && i <= radius; i++)
+		
+		for (int index : requestedPages)
 		{
-			currentPage = center + i;
-			if (currentPage < 0 || currentPage >= numberPages || (currentPage >= lastLow && currentPage <= lastHigh))
-				continue;
-
-			renderPage(currentPage, ((Rectangle) xPositions.get(currentPage)).xProperty().doubleValue(), pdfRenderer, pdfTextSearcher, pageLayer);
+			renderPage(index, ((Rectangle) xPositions.get(index)).xProperty().doubleValue());
 		}
 		
-		if (isCancelled()) System.out.println("Well damn");
+		if (isCancelled()) System.out.println("Task cancelled");
 	}
 
 	@Override
@@ -78,10 +68,10 @@ public class PdfRenderTask4<E> extends Task<E>
 	{
 		try
 		{
-			renderPages(lastRenderStartPage, 10, (int) (lastRenderLowBound * numberPages), (int) (lastRenderHighBound * numberPages), numberPages, pdfRenderer, pdfTextSearcher, pageLayer, placeholderLayer);
+			renderPages();
 		} catch (IOException e)
 		{
-			e.printStackTrace();
+			System.out.println("Task failed to render pages");
 		}
 
 		return null;
