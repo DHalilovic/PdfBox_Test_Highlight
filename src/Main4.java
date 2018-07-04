@@ -45,11 +45,13 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
-public class Main3 //extends Application
+public class Main4 extends Application
 {
 	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\JavaStructures.pdf";
 	final static int pagePadding = 16;
-	double lastRenderStartPage = 0;
+	int lastRenderStartPage = 0;
+	int lastRenderLowBound = 0;
+	int lastRenderHighBound = 0;
 	ArrayList<Task> tasks;
 
 	private static ArrayList<Index> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
@@ -135,22 +137,23 @@ public class Main3 //extends Application
 		{
 			public void changed(ObservableValue<? extends Number> ov, Number oldVal, Number newVal)
 			{
-				double newValInt = newVal.doubleValue();
+				int newValInt = (int) (newVal.doubleValue() * numberPages);
 
-				if (Math.abs((newValInt - lastRenderStartPage) * numberPages) > 4)
+				if (Math.abs(newValInt - lastRenderStartPage) > 4)
 				{
 					for (Task task : tasks)
 						task.cancel();
 					
+					lastRenderLowBound = lastRenderStartPage - 4;
+					lastRenderHighBound = lastRenderStartPage + 4;
 					lastRenderStartPage = newValInt;
 					pageLayer.getChildren().clear();
 					
 					//TODO Only one thread can access a single PDFBox instance at a time; distribute instances across threads?
-					PdfRenderTask<Void> renderTask;
+					PdfRenderTask4<Void> renderTask;
 					try
 					{
-						System.out.println(lastRenderStartPage);
-						renderTask = new PdfRenderTask<Void>(pdDocument, numberPages, lastRenderStartPage, pageLayer, placeholderLayer);
+						renderTask = new PdfRenderTask4<Void>(pdDocument, numberPages, lastRenderStartPage, lastRenderLowBound, lastRenderHighBound, pageLayer, placeholderLayer);
 						Thread renderHandler = new Thread(renderTask);
 						renderHandler.setDaemon(true);
 						tasks.add(renderTask);
@@ -170,6 +173,6 @@ public class Main3 //extends Application
 
 	public static void main(String[] args)
 	{
-		//launch();
+		launch();
 	}
 }

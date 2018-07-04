@@ -47,7 +47,6 @@ public class NewZoomableScrollPane extends ScrollPane
 
 		outerNode.setOnScroll(e ->
 		{
-			//System.out.println("zooming");
 			if (e.isControlDown())
 			{
 				e.consume();
@@ -99,6 +98,5 @@ public class NewZoomableScrollPane extends ScrollPane
 		Bounds updatedInnerBounds = zoomNode.getLayoutBounds();
 		this.setHvalue((valX + adjustment.getX()) / (updatedInnerBounds.getWidth() - viewportBounds.getWidth()));
 		this.setVvalue((valY + adjustment.getY()) / (updatedInnerBounds.getHeight() - viewportBounds.getHeight()));
-		//System.out.println(updatedInnerBounds.getWidth() + ", " + updatedInnerBounds.getHeight());
 	}
 }
