@@ -57,7 +57,7 @@ public class PdfRenderTask<E> extends Task<E>
 		int currentPage;
 
 		// Render remaining pages outwards
-		for (int i = -radius; i <= radius; i++)
+		for (int i = -radius; !isCancelled() && i <= radius; i++)
 		{
 			currentPage = center + i;
 			if (currentPage < 0 || currentPage >= numberPages)
@@ -65,6 +65,8 @@ public class PdfRenderTask<E> extends Task<E>
 
 			renderPage(currentPage, ((Rectangle) xPositions.get(currentPage)).xProperty().doubleValue(), pdfRenderer, pdfTextSearcher, pageLayer);
 		}
+		
+		if (isCancelled()) System.out.println("Well damn");
 	}
 
 	@Override
@@ -84,7 +86,7 @@ public class PdfRenderTask<E> extends Task<E>
 	@Override
 	protected void succeeded()
 	{
-		System.out.println("poop running");
+		//System.out.println("poop running");
 		for (ImageView pageImage : pageImages)
 			pageLayer.getChildren().add(pageImage);
 	}

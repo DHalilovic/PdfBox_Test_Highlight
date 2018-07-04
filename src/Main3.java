@@ -50,6 +50,7 @@ public class Main3 extends Application
 	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\JavaStructures.pdf";
 	final static int pagePadding = 16;
 	double lastRenderStartPage = 0;
+	ArrayList<Task> tasks;
 
 	private static ArrayList<Index> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
 	{
@@ -107,6 +108,7 @@ public class Main3 extends Application
 	public void start(Stage primaryStage) throws Exception
 	{
 		PDDocument pdDocument = PDDocument.load(new File(path));
+		tasks = new ArrayList<Task>();
 		int numberPages = pdDocument.getNumberOfPages();
 		int pageWidth;
 		int pageHeight;
@@ -137,6 +139,9 @@ public class Main3 extends Application
 
 				if (Math.abs((newValInt - lastRenderStartPage) * numberPages) > 4)
 				{
+					for (Task task : tasks)
+						task.cancel();
+					
 					lastRenderStartPage = newValInt;
 					pageLayer.getChildren().clear();
 					
@@ -144,9 +149,11 @@ public class Main3 extends Application
 					PdfRenderTask<Void> renderTask;
 					try
 					{
+						System.out.println(lastRenderStartPage);
 						renderTask = new PdfRenderTask<Void>(pdDocument, numberPages, lastRenderStartPage, pageLayer, placeholderLayer);
 						Thread renderHandler = new Thread(renderTask);
 						renderHandler.setDaemon(true);
+						tasks.add(renderTask);
 						renderHandler.start();
 					} catch (IOException e)
 					{
