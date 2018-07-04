@@ -144,10 +144,19 @@ public class Main4 extends Application
 					for (Task task : tasks)
 						task.cancel();
 					
+					ObservableList<Node> renderedPages = pageLayer.getChildren();
+					
+					if (lastRenderStartPage < newValInt)
+						for (int i = 0; i < renderedPages.size() && i < 2; i++)
+							renderedPages.remove(0);
+					else
+						for (int i = 7; i < renderedPages.size(); i++)
+							renderedPages.remove(renderedPages.size() - 1);
+					
 					lastRenderLowBound = lastRenderStartPage - 4;
 					lastRenderHighBound = lastRenderStartPage + 4;
 					lastRenderStartPage = newValInt;
-					pageLayer.getChildren().clear();
+					
 					
 					//TODO Only one thread can access a single PDFBox instance at a time; distribute instances across threads?
 					PdfRenderTask4<Void> renderTask;
