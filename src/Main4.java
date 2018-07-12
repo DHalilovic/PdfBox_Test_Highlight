@@ -29,6 +29,7 @@ import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -51,6 +52,7 @@ public class Main4 extends Application
 {
 	final static String path = "C:\\Users\\Denis Halilovic\\Documents\\Office Documents\\PDF_Files\\JavaStructures.pdf";
 	final static int pagePadding = 16;
+	final static int dpi = 144;
 	int lastIndex = 0;
 	ArrayList<Task> tasks;
 
@@ -126,8 +128,8 @@ public class Main4 extends Application
 		Pane highlightLayer = new Pane();
 
 		pdfViewPane.getChildren().addAll(placeholderLayer, pageLayer, highlightLayer);
-		NewZoomableScrollPane pdfScrollPane = new NewZoomableScrollPane(pdfViewPane);
-		pdfScrollPane.setHbarPolicy(ScrollBarPolicy.ALWAYS);
+		NewZoomableScrollPane pdfScrollPane = new NewZoomableScrollPane(pdfViewPane, 0.6, 2.4);
+		//pdfScrollPane.setHbarPolicy(ScrollBarPolicy.ALWAYS);
 
 		createPlaceholders(numberPages, pageWidth, pageHeight, placeholderLayer);
 
@@ -135,34 +137,38 @@ public class Main4 extends Application
 		{
 			public void changed(ObservableValue<? extends Number> ov, Number oldVal, Number newVal)
 			{
-				if (!tasks.isEmpty() && tasks.get(0).isRunning())
-					return;
+				//System.out.println(pdfScrollPane.getScaleValue());
 
-				int newIndex = (int) (newVal.doubleValue() * numberPages);
-
-				if (Math.abs(newIndex - lastIndex) < 3)
-					return;
-
-				lastIndex = newIndex;
-
-				for (Task task : tasks)
-					task.cancel();
-
-				HashSet<Integer> requestedPages = new HashSet<Integer>();
-
-				for (int i = newIndex - 6; i <= newIndex + 5; i++)
+				if (pdfScrollPane.getScaleValue() >= 0.75)
 				{
-					requestedPages.add(i);
-				}
 
-				ObservableList<Node> renderedPages = pageLayer.getChildren();
+					if (!tasks.isEmpty() && tasks.get(0).isRunning())
+						return;
 
+					int newIndex = (int) (newVal.doubleValue() * numberPages);
 
-				Iterator<Node> iterator = renderedPages.listIterator();
-				
-				while (iterator.hasNext())
+					if (Math.abs(newIndex - lastIndex) < 3)
+						return;
+
+					lastIndex = newIndex;
+
+					for (Task task : tasks)
+						task.cancel();
+
+					HashSet<Integer> requestedPages = new HashSet<Integer>();
+
+					for (int i = (newIndex - 6 >= 0) ? newIndex - 6 : 0; i <= newIndex + 5; i++)
 					{
-						PageImageView child = (PageImageView) iterator.next();				
+						requestedPages.add(i);
+					}
+
+					ObservableList<Node> renderedPages = pageLayer.getChildren();
+
+					Iterator<Node> iterator = renderedPages.listIterator();
+
+					while (iterator.hasNext())
+					{
+						PageImageView child = (PageImageView) iterator.next();
 						int pageIndex = child.getIndex();
 
 						if (requestedPages.contains(pageIndex))
@@ -171,25 +177,66 @@ public class Main4 extends Application
 							iterator.remove();
 					}
 
-				PdfRenderTask4<Void> renderTask;
-				try
-				{
-					renderTask = new PdfRenderTask4<Void>(pdDocument, numberPages, pageLayer, placeholderLayer, requestedPages);
-					Thread renderHandler = new Thread(renderTask);
-					renderHandler.setDaemon(true);
-					tasks.add(renderTask);
-					renderHandler.start();
-				} catch (IOException e)
-				{
-					e.printStackTrace();
-				}
+					PdfRenderTask4<Void> renderTask;
+					try
+					{
+						renderTask = new PdfRenderTask4<Void>(pdDocument, numberPages, pageLayer, placeholderLayer, requestedPages, pageWidth, dpi);
+						Thread renderHandler = new Thread(renderTask);
+						renderHandler.setDaemon(true);
+						tasks.add(renderTask);
+						renderHandler.start();
+					} catch (IOException e)
+					{
+						e.printStackTrace();
+					}
 
+				} else
+				{
+					// TODO General Page Coloring Here
+				}
 			}
 		});
+
+		PdfRenderTask4<Void> renderTask;
+		HashSet<Integer> requestedPages = new HashSet<Integer>();
+
+		for (int i = 0; i < 11; i++)
+		{
+			requestedPages.add(i);
+		}
+
+		try
+		{
+			renderTask = new PdfRenderTask4<Void>(pdDocument, numberPages, pageLayer, placeholderLayer, requestedPages, pageWidth, dpi);
+			Thread renderHandler = new Thread(renderTask);
+			renderHandler.setDaemon(true);
+			tasks.add(renderTask);
+			renderHandler.start();
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 
 		primaryStage.setTitle("Test");
 		primaryStage.setScene(new Scene(pdfScrollPane));
 		primaryStage.show();
+
+		/*
+		for (Node node : pdfScrollPane.getChildrenUnmodifiable())
+		{
+			if (node instanceof ScrollBar)
+			{
+				ScrollBar scrollBar = (ScrollBar) node;
+		
+				if (scrollBar.getOrientation() == Orientation.HORIZONTAL)
+				{
+					System.out.println("SOMETHING");
+					scrollBar.setBlockIncrement(0);
+		
+				}
+			}
+		}
+		*/
 	}
 
 	public static void main(String[] args)

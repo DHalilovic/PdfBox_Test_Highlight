@@ -26,10 +26,12 @@ public class PdfRenderTask4<E> extends Task<E>
 	Pane placeholderLayer;
 	Pane pageLayer;
 	int numberPages;
+	int pageWidth;
+	int dpi;
 	Set<Integer> requestedPages;
 	ArrayList<ImageView> pageImages;
 
-	public PdfRenderTask4(PDDocument pdDocument, int numberPages, Pane pageLayer, Pane placeholderLayer, Set<Integer> requestedPages) throws IOException
+	public PdfRenderTask4(PDDocument pdDocument, int numberPages, Pane pageLayer, Pane placeholderLayer, Set<Integer> requestedPages, int pageWidth, int dpi) throws IOException
 	{
 		this.pdfRenderer = new PDFRenderer(pdDocument);
 		this.pdfTextSearcher = new PDFTextSearcher();
@@ -38,14 +40,17 @@ public class PdfRenderTask4<E> extends Task<E>
 		this.placeholderLayer = placeholderLayer;
 		pageImages = new ArrayList<ImageView>();
 		this.requestedPages = requestedPages;
+		this.pageWidth = pageWidth;
+		this.dpi = dpi;
 	}
 
 	private void renderPage(int index, double xPosition) throws IOException
 	{
-		BufferedImage bim = pdfRenderer.renderImageWithDPI(index, 72, ImageType.RGB);
+		BufferedImage bim = pdfRenderer.renderImageWithDPI(index, dpi, ImageType.RGB);
 		WritableImage wim = SwingFXUtils.toFXImage(bim, null);
 		PageImageView pageImage = new PageImageView(wim, index);
 		pageImage.setPreserveRatio(true);
+		pageImage.setFitWidth(pageWidth);
 		pageImage.relocate(xPosition, 0);
 		pageImages.add(pageImage);
 	}

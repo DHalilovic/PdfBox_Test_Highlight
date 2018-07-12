@@ -32,7 +32,6 @@ public class ZoomableScrollPane extends ScrollPane
 
 		updateScale();
 
-		
 		this.setSkin(new ScrollPaneSkin(this)
 		{
 			@Override
@@ -70,6 +69,11 @@ public class ZoomableScrollPane extends ScrollPane
 	{
 		target.setScaleX(scaleValue);
 		target.setScaleY(scaleValue);
+	}
+
+	public double getScaleValue()
+	{
+		return scaleValue;
 	}
 
 	public void onScroll(double wheelDelta, Point2D mousePoint)

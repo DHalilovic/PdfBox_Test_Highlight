@@ -1,6 +1,7 @@
 import com.sun.javafx.scene.control.skin.ScrollPaneSkin;
 
 import javafx.geometry.Bounds;
+import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -12,20 +13,24 @@ import javafx.scene.layout.VBox;
 
 public class NewZoomableScrollPane extends ScrollPane
 {
-	private double scaleValue = 0.7;
+	private double scaleValue = 1;
+	private double minScaleValue;
+	private double maxScaleValue;
 	private double zoomIntensity = 0.02;
 	private Node target;
 	private Node zoomNode;
 
-	public NewZoomableScrollPane(Node target)
+	public NewZoomableScrollPane(Node target, double minScaleValue, double maxScaleValue)
 	{
 		super();
 		this.target = target;
+		this.minScaleValue = minScaleValue;
+		this.maxScaleValue = maxScaleValue;
 		zoomNode = new Group(target);
 		setContent(outerNode(zoomNode));
 
 		setPannable(true);
-		setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+		setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 		setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 		setFitToHeight(true); //center
 		setFitToWidth(true); //center
@@ -71,9 +76,20 @@ public class NewZoomableScrollPane extends ScrollPane
 		target.setScaleY(scaleValue);
 	}
 
+	public double getScaleValue()
+	{
+		return scaleValue;
+	}
+
 	private void onScroll(double wheelDelta, Point2D mousePoint)
 	{
 		double zoomFactor = Math.exp(wheelDelta * zoomIntensity);
+		double nextScaleValue = scaleValue * zoomFactor;
+
+		//System.out.println(nextScaleValue);
+
+		if (nextScaleValue < minScaleValue || nextScaleValue > maxScaleValue)
+			return;
 
 		Bounds innerBounds = zoomNode.getLayoutBounds();
 		Bounds viewportBounds = getViewportBounds();
@@ -82,7 +98,7 @@ public class NewZoomableScrollPane extends ScrollPane
 		double valX = getHvalue() * (innerBounds.getWidth() - viewportBounds.getWidth());
 		double valY = getVvalue() * (innerBounds.getHeight() - viewportBounds.getHeight());
 
-		scaleValue *= zoomFactor;
+		scaleValue = nextScaleValue;
 
 		// convert target coordinates to zoomTarget coordinates
 		Point2D posInZoomTarget = target.parentToLocal(zoomNode.parentToLocal(mousePoint));
