@@ -41,6 +41,7 @@ import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -229,19 +230,35 @@ public class Main4 extends Application
 			e.printStackTrace();
 		}
 
+		HBox docHBox = new HBox(8);
+		docHBox.setPadding(new Insets(4));
+		docHBox.setAlignment(Pos.CENTER);
+		docHBox.getChildren().addAll(new Text(path));
+		
 		TextField pageTextField = new TextField("1");
 		pageTextField.prefColumnCountProperty().bind(pageTextField.textProperty().length());
 
+		HBox pageHBox = new HBox(8);
+		pageHBox.setPadding(new Insets(4));
+		pageHBox.setAlignment(Pos.CENTER);
+		pageHBox.getChildren().addAll(pageTextField, new Text("/"), new Text("" + numberPages));
 		
-		HBox pdfHBox = new HBox(8);
-		pdfHBox.setPadding(new Insets(4));
-		pdfHBox.setAlignment(Pos.CENTER);
-		pdfHBox.getChildren().addAll(pageTextField, new Text("/"), new Text("" + numberPages));
+		TextField searchTextField = new TextField();
+
+		HBox searchHBox = new HBox(8);
+		searchHBox.setPadding(new Insets(4));
+		searchHBox.setAlignment(Pos.CENTER);
+		searchHBox.getChildren().addAll(new Text("Search"), searchTextField);
+		
+		BorderPane pdfHeaderPane = new BorderPane();
+		pdfHeaderPane.setLeft(docHBox);
+		pdfHeaderPane.setCenter(pageHBox);
+		pdfHeaderPane.setRight(searchHBox);
 		
 		VBox pdfVBox = new VBox(8);
 		pdfVBox.setPadding(new Insets(4));
 
-		pdfVBox.getChildren().addAll(pdfHBox, pdfScrollPane);
+		pdfVBox.getChildren().addAll(pdfHeaderPane, pdfScrollPane);
 		pdfVBox.setVgrow(pdfScrollPane, Priority.ALWAYS);
 		
 		primaryStage.setTitle("Test");
