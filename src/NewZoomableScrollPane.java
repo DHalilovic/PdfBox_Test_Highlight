@@ -81,6 +81,16 @@ public class NewZoomableScrollPane extends ScrollPane
 		return scaleValue;
 	}
 
+	public double getMinScaleValue()
+	{
+		return minScaleValue;
+	}
+
+	public double getMaxScaleValue()
+	{
+		return maxScaleValue;
+	}
+
 	private void onScroll(double wheelDelta, Point2D mousePoint)
 	{
 		double zoomFactor = Math.exp(wheelDelta * zoomIntensity);

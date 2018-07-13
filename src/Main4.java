@@ -54,6 +54,7 @@ public class Main4 extends Application
 	final static int pagePadding = 16;
 	final static int dpi = 144;
 	int lastIndex = 0;
+	double lastScaleValue = 1.0;
 	ArrayList<Task> tasks;
 
 	private static ArrayList<Index> getIndex(ArrayList<List<TextPosition>> textPositions, String target)
@@ -128,7 +129,7 @@ public class Main4 extends Application
 		Pane highlightLayer = new Pane();
 
 		pdfViewPane.getChildren().addAll(placeholderLayer, pageLayer, highlightLayer);
-		NewZoomableScrollPane pdfScrollPane = new NewZoomableScrollPane(pdfViewPane, 0.6, 2.4);
+		NewZoomableScrollPane pdfScrollPane = new NewZoomableScrollPane(pdfViewPane, 0.8, 2.4);
 		//pdfScrollPane.setHbarPolicy(ScrollBarPolicy.ALWAYS);
 
 		createPlaceholders(numberPages, pageWidth, pageHeight, placeholderLayer);
@@ -138,10 +139,14 @@ public class Main4 extends Application
 			public void changed(ObservableValue<? extends Number> ov, Number oldVal, Number newVal)
 			{
 				//System.out.println(pdfScrollPane.getScaleValue());
-
-				if (pdfScrollPane.getScaleValue() >= 0.75)
+				if (pdfScrollPane.getScaleValue() != lastScaleValue)
 				{
-
+					lastScaleValue = pdfScrollPane.getScaleValue();
+					return;
+				}
+				
+				if (pdfScrollPane.getScaleValue() >= pdfScrollPane.getMinScaleValue())
+				{
 					if (!tasks.isEmpty() && tasks.get(0).isRunning())
 						return;
 
