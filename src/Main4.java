@@ -32,19 +32,26 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
+import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
@@ -122,7 +129,7 @@ public class Main4 extends Application
 			pageWidth = tempImage.getWidth();
 			pageHeight = tempImage.getHeight();
 		}
-
+		
 		StackPane pdfViewPane = new StackPane();
 		Pane placeholderLayer = new Pane();
 		Pane pageLayer = new Pane();
@@ -222,8 +229,23 @@ public class Main4 extends Application
 			e.printStackTrace();
 		}
 
+		TextField pageTextField = new TextField("1");
+		pageTextField.prefColumnCountProperty().bind(pageTextField.textProperty().length());
+
+		
+		HBox pdfHBox = new HBox(8);
+		pdfHBox.setPadding(new Insets(4));
+		pdfHBox.setAlignment(Pos.CENTER);
+		pdfHBox.getChildren().addAll(pageTextField, new Text("/"), new Text("" + numberPages));
+		
+		VBox pdfVBox = new VBox(8);
+		pdfVBox.setPadding(new Insets(4));
+
+		pdfVBox.getChildren().addAll(pdfHBox, pdfScrollPane);
+		pdfVBox.setVgrow(pdfScrollPane, Priority.ALWAYS);
+		
 		primaryStage.setTitle("Test");
-		primaryStage.setScene(new Scene(pdfScrollPane));
+		primaryStage.setScene(new Scene(pdfVBox));
 		primaryStage.show();
 
 		/*
