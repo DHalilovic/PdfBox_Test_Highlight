@@ -35,6 +35,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
@@ -170,7 +171,7 @@ public class Main4 extends Application
 
 					HashSet<Integer> requestedPages = new HashSet<Integer>();
 
-					for (int i = (newIndex - 6 >= 0) ? newIndex - 6 : 0; i <= newIndex + 5; i++)
+					for (int i = (newIndex - 6 >= 0) ? newIndex - 6 : 0; i <= newIndex + 5 && i < numberPages; i++)
 					{
 						requestedPages.add(i);
 					}
@@ -239,12 +240,32 @@ public class Main4 extends Application
 		pageTextField.prefColumnCountProperty().bind(pageTextField.textProperty().length());
 		pageTextField.focusedProperty().addListener((observable, oldValue, newValue) ->
 		{
+			// If in focus
 			if (newValue)
 			{
-				System.out.println("Textfield on focus");
-			} else
+				pageTextField.setUserData(Integer.parseInt(pageTextField.getText()));
+				return;
+			}
+
+			int newPageValue = 0;
+			boolean canScroll = true;
+
+			try
 			{
-				System.out.println("Textfield out focus");
+				newPageValue = Integer.parseInt(pageTextField.getText());
+			} catch (NumberFormatException e)
+			{
+				canScroll = false;
+			}
+
+			if (!canScroll)
+				return;
+
+			int lastPageValue = (int) pageTextField.getUserData();
+
+			if (lastPageValue != newPageValue && newPageValue > 0 && newPageValue <= numberPages)
+			{
+				pdfScrollPane.setHvalue(newPageValue / (double) numberPages);
 			}
 		});
 
@@ -265,10 +286,16 @@ public class Main4 extends Application
 		pdfHeaderPane.setCenter(pageHBox);
 		pdfHeaderPane.setRight(searchHBox);
 
+		Button zoomButton = new Button("Zoom");
+		zoomButton.setPadding(new Insets(4));
+		
+		BorderPane pdfFooterPane = new BorderPane();
+		pdfFooterPane.setCenter(zoomButton);
+		
 		VBox pdfVBox = new VBox(8);
 		pdfVBox.setPadding(new Insets(4));
 
-		pdfVBox.getChildren().addAll(pdfHeaderPane, pdfScrollPane);
+		pdfVBox.getChildren().addAll(pdfHeaderPane, pdfScrollPane, pdfFooterPane);
 		pdfVBox.setVgrow(pdfScrollPane, Priority.ALWAYS);
 
 		primaryStage.setTitle("Test");
