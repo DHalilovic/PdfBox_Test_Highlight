@@ -130,7 +130,7 @@ public class Main4 extends Application
 			pageWidth = tempImage.getWidth();
 			pageHeight = tempImage.getHeight();
 		}
-		
+
 		StackPane pdfViewPane = new StackPane();
 		Pane placeholderLayer = new Pane();
 		Pane pageLayer = new Pane();
@@ -152,7 +152,7 @@ public class Main4 extends Application
 					lastScaleValue = pdfScrollPane.getScaleValue();
 					return;
 				}
-				
+
 				if (pdfScrollPane.getScaleValue() >= pdfScrollPane.getMinScaleValue())
 				{
 					if (!tasks.isEmpty() && tasks.get(0).isRunning())
@@ -234,33 +234,43 @@ public class Main4 extends Application
 		docHBox.setPadding(new Insets(4));
 		docHBox.setAlignment(Pos.CENTER);
 		docHBox.getChildren().addAll(new Text(path));
-		
+
 		TextField pageTextField = new TextField("1");
 		pageTextField.prefColumnCountProperty().bind(pageTextField.textProperty().length());
+		pageTextField.focusedProperty().addListener((observable, oldValue, newValue) ->
+		{
+			if (newValue)
+			{
+				System.out.println("Textfield on focus");
+			} else
+			{
+				System.out.println("Textfield out focus");
+			}
+		});
 
 		HBox pageHBox = new HBox(8);
 		pageHBox.setPadding(new Insets(4));
 		pageHBox.setAlignment(Pos.CENTER);
 		pageHBox.getChildren().addAll(pageTextField, new Text("/"), new Text("" + numberPages));
-		
+
 		TextField searchTextField = new TextField();
 
 		HBox searchHBox = new HBox(8);
 		searchHBox.setPadding(new Insets(4));
 		searchHBox.setAlignment(Pos.CENTER);
 		searchHBox.getChildren().addAll(new Text("Search"), searchTextField);
-		
+
 		BorderPane pdfHeaderPane = new BorderPane();
 		pdfHeaderPane.setLeft(docHBox);
 		pdfHeaderPane.setCenter(pageHBox);
 		pdfHeaderPane.setRight(searchHBox);
-		
+
 		VBox pdfVBox = new VBox(8);
 		pdfVBox.setPadding(new Insets(4));
 
 		pdfVBox.getChildren().addAll(pdfHeaderPane, pdfScrollPane);
 		pdfVBox.setVgrow(pdfScrollPane, Priority.ALWAYS);
-		
+
 		primaryStage.setTitle("Test");
 		primaryStage.setScene(new Scene(pdfVBox));
 		primaryStage.show();
