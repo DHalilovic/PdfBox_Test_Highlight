@@ -28,6 +28,7 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -182,6 +183,9 @@ public class Main4 extends Application
 				return;
 			}
 
+			if (isMapView)
+				return;
+
 			int newPageValue = 0;
 			boolean canScroll = true;
 
@@ -223,28 +227,47 @@ public class Main4 extends Application
 
 		Button zoomButton = new Button("Zoom");
 		zoomButton.setPadding(new Insets(4));
-		zoomButton.setOnAction((ActionEvent e) ->
+		zoomButton.setOnAction(new EventHandler<ActionEvent>()
 		{
-			if (isMapView)
+			@Override
+			public void handle(ActionEvent e)
 			{
-				zoomButton.setText("Zoom In");
-				pdfScrollPane.forceZoom(pdfScrollPane.getMinScaleValue());
-			} else
-			{
-				zoomButton.setText("Zoom Out");
-				pageLayer.getChildren().clear();
-				pdfScrollPane.forceZoom(mapScale);
-			}
+				{
+					if (isMapView)
+					{
+						zoomButton.setText("Zoom Out");
+						placeholderLayer.toBack();
+						int newIndex = lastIndex;
 
-			isMapView = !isMapView;
+						try
+						{
+							newIndex = Integer.parseInt(pageTextField.getText());
+						} catch (NumberFormatException ex)
+						{
+						}
+
+						pdfScrollPane.forceZoom(pdfScrollPane.getMinScaleValue());
+						pdfScrollPane.setHvalue((double) newIndex / numberPages);
+					} else
+					{
+						zoomButton.setText("Zoom In");
+						pageLayer.getChildren().clear();
+						pdfScrollPane.forceZoom(mapScale);
+						placeholderLayer.toFront();
+					}
+
+					isMapView = !isMapView;
+				}
+			}
 		});
-		
+
 		pdfScrollPane.hvalueProperty().addListener(new ChangeListener<Number>()
 		{
 			public void changed(ObservableValue<? extends Number> ov, Number oldVal, Number newVal)
 			{
-				//System.out.println(pdfScrollPane.getScaleValue());
-				if (pdfScrollPane.getScaleValue() != lastScaleValue)
+
+				// TODO Separate isMapView to separate condition which handles Map page highlighting
+				if (isMapView && pdfScrollPane.getScaleValue() != lastScaleValue)
 				{
 					lastScaleValue = pdfScrollPane.getScaleValue();
 					return;
@@ -256,7 +279,7 @@ public class Main4 extends Application
 						return;
 
 					int newIndex = (int) (newVal.doubleValue() * numberPages);
-					
+
 					pageTextField.setText("" + newIndex);
 
 					if (Math.abs(newIndex - lastIndex) < 3)
