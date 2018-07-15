@@ -64,7 +64,6 @@ public class NewZoomableScrollPane extends ScrollPane
 
 	private Node centeredNode(Node node)
 	{
-		// TODO Switch to Pane
 		VBox vBox = new VBox(node);
 		vBox.setAlignment(Pos.CENTER);
 		return vBox;
@@ -124,5 +123,20 @@ public class NewZoomableScrollPane extends ScrollPane
 		Bounds updatedInnerBounds = zoomNode.getLayoutBounds();
 		this.setHvalue((valX + adjustment.getX()) / (updatedInnerBounds.getWidth() - viewportBounds.getWidth()));
 		this.setVvalue((valY + adjustment.getY()) / (updatedInnerBounds.getHeight() - viewportBounds.getHeight()));
+	}
+
+	public void forceZoom(double nextScaleValue)
+	{
+		Bounds innerBounds = zoomNode.getLayoutBounds();
+		Bounds viewportBounds = getViewportBounds();
+
+		// calculate pixel offsets from [0, 1] range
+		double valX = getHvalue() * (innerBounds.getWidth() - viewportBounds.getWidth());
+		double valY = getVvalue() * (innerBounds.getHeight() - viewportBounds.getHeight());
+
+		scaleValue = nextScaleValue;
+
+		updateScale();
+		layout(); // refresh ScrollPane scroll positions & target bounds
 	}
 }
