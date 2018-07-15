@@ -267,7 +267,7 @@ public class Main4 extends Application
 			{
 
 				// TODO Separate isMapView to separate condition which handles Map page highlighting
-				if (isMapView && pdfScrollPane.getScaleValue() != lastScaleValue)
+				if (/*isMapView && */pdfScrollPane.getScaleValue() != lastScaleValue)
 				{
 					lastScaleValue = pdfScrollPane.getScaleValue();
 					return;
@@ -282,7 +282,7 @@ public class Main4 extends Application
 
 					pageTextField.setText("" + newIndex);
 
-					if (Math.abs(newIndex - lastIndex) < 3)
+					if (!isMapView && Math.abs(newIndex - lastIndex) < 3)
 						return;
 
 					lastIndex = newIndex;
