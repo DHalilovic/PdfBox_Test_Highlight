@@ -157,7 +157,7 @@ public class Main4 extends Application
 
 		try
 		{
-			renderTask = new PdfRenderTask4<Void>(pdDocument, numberPages, pageLayer, placeholderLayer, requestedPages, pageWidth, dpi);
+			renderTask = new PdfRenderTask4<Void>(pdDocument, numberPages, pageLayer, highlightLayer, placeholderLayer, requestedPages, pageWidth, dpi);
 			Thread renderHandler = new Thread(renderTask);
 			renderHandler.setDaemon(true);
 			tasks.add(renderTask);
@@ -241,7 +241,7 @@ public class Main4 extends Application
 
 						try
 						{
-							newIndex = Integer.parseInt(pageTextField.getText());
+							newIndex = Integer.parseInt(pageTextField.getText()) + 1;
 						} catch (NumberFormatException ex)
 						{
 						}
@@ -252,6 +252,7 @@ public class Main4 extends Application
 					{
 						zoomButton.setText("Zoom In");
 						pageLayer.getChildren().clear();
+						highlightLayer.getChildren().clear();
 						pdfScrollPane.forceZoom(mapScale);
 						placeholderLayer.toFront();
 					}
@@ -280,7 +281,7 @@ public class Main4 extends Application
 
 					int newIndex = (int) (newVal.doubleValue() * numberPages);
 
-					pageTextField.setText("" + newIndex);
+					pageTextField.setText("" + (newIndex + 1));
 
 					if (!isMapView && Math.abs(newIndex - lastIndex) < 3)
 						return;
@@ -297,8 +298,10 @@ public class Main4 extends Application
 						requestedPages.add(i);
 					}
 
-					ObservableList<Node> renderedPages = pageLayer.getChildren();
-
+					// TODO Group highlights in group layers, make highlight layer stackpane, delete like pages
+					//highlightLayer.getChildren().clear();
+					
+					ObservableList<Node> renderedPages = pageLayer.getChildren();					
 					Iterator<Node> iterator = renderedPages.listIterator();
 
 					while (iterator.hasNext())
@@ -315,7 +318,7 @@ public class Main4 extends Application
 					PdfRenderTask4<Void> renderTask;
 					try
 					{
-						renderTask = new PdfRenderTask4<Void>(pdDocument, numberPages, pageLayer, placeholderLayer, requestedPages, pageWidth, dpi);
+						renderTask = new PdfRenderTask4<Void>(pdDocument, numberPages, pageLayer, highlightLayer, placeholderLayer, requestedPages, pageWidth, dpi);
 						Thread renderHandler = new Thread(renderTask);
 						renderHandler.setDaemon(true);
 						tasks.add(renderTask);
